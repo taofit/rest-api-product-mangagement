@@ -1,0 +1,22 @@
+{
+    "products": [
+        {
+            "id": "a546efd5-1242-4af1-ja78-1a0c1620041c",
+            "name": "Dining Chair",
+            "price": {
+                "amount": 299.29,
+                "currency": "SEK"
+            },
+            "stock": 4
+        },
+        {
+            "id": "014571de-30fc-4ae6-8d74-2f3641790e42",
+            "name": "Dinning Table",
+            "price": {
+                "amount": 8799.38,
+                "currency": "SEK"
+            },
+            "stock": 1
+        }
+    ]
+}
