@@ -14,3 +14,11 @@ The warehouse has the following functionality;
 * Get a specific product with formatted price.
 * Update the product stock.
 * Create a product.
+
+
+## set up project
+
+### docker
+run command: `docker-compose`
+### data migration
+run command under root: `docker run -v /Users/taosun/Documents/continue-forward/go/rest-api-product-mangagement/migrations:/migrations --network host migrate/migrate -path=/migrations/ -database "postgres://root:password@localhost:5432/rest_api?sslmode=disable" up 1`
