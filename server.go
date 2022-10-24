@@ -1,16 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"log"
-
-	"github.com/taofit/rest-api-product-mangagement/db"
+	"github.com/taofit/rest-api-product-mangagement/handler"
 )
 
 func main() {
-	db, err := db.SetDbCon()
-	if err != nil {
-		log.Fatalf("Could not set up database: %v", err)
-	}
-	fmt.Println(db)
+	handler.RegisterRouter()
+
 }
