@@ -21,8 +21,8 @@ func SetDbCon() (*sql.DB, error) {
 	dbName := os.Getenv("POSTGRES_DB")
 	dbPort := os.Getenv("DB_PORT")
 
-	dbsqln := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPass, dbName)
-	conn, err := sql.Open("postgres", dbsqln)
+	dbSqlN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPass, dbName)
+	conn, err := sql.Open("postgres", dbSqlN)
 	if err != nil {
 		return &sql.DB{}, err
 	}

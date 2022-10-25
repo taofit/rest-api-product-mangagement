@@ -13,17 +13,23 @@ type handler struct {
 }
 
 func RegisterRouter() {
-	conn, err := db.SetDbCon()
-	if err != nil {
-		log.Fatalf("Could not set up database: %v", err)
-	}
-	handler := handler{DB: conn}
+	handler := GetHandler()
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	{
 		routes := r.Group("/product")
 		routes.GET("/", handler.GetProducts)
+		routes.GET("/:id", handler.GetProduct)
 	}
 
 	r.Run()
+}
+
+func GetHandler() handler {
+	conn, err := db.SetDbCon()
+	if err != nil {
+		log.Fatalf("Could not set up database: %v", err)
+	}
+	
+	return handler{DB: conn} 
 }
