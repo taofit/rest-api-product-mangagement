@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -28,16 +27,9 @@ func (h handler) GetProducts(c *gin.Context) {
 		GROUP BY p.id
 		OFFSET $1 LIMIT $2
 	`, offSet, perPage)
-	if err != nil {
-		var eMsg string
-		if err == sql.ErrNoRows {
-			eMsg = "No row records found in the product table"
-			log.Println(eMsg)
-		}
-		if eMsg == "" {
-			eMsg = err.Error()
-		}
-		response(c, http.StatusNotFound, eMsg)
+
+	hasErr := hasErr(c, err)
+	if hasErr {
 		return
 	}
 
@@ -47,32 +39,49 @@ func (h handler) GetProducts(c *gin.Context) {
 	for rows.Next() {
 		product := entity.Product{}
 		rows.Scan(&product.Id, &product.Name, &product.Stock, &product.Created_at, &prices)
-		product.Prices, err = getPriceList(prices)
-		if err != nil {
-			response(c, http.StatusNotFound, err.Error())
-			return
-		}
+		product.Prices = getPriceList(prices)
 		products = append(products, product)
 	}
 
 	c.JSON(http.StatusOK, products)
 }
 
-func getPriceList(prices string) ([]entity.Price, error) {
+func (h handler) GetProduct(c *gin.Context) {
+	id := c.Param("id")
+	product := entity.Product{}
+	row := h.DB.QueryRow(`
+		SELECT p.id, p.name, p.stock, p.created_at, string_agg(pp.price || ' ' || pp.currency, ',') price
+		FROM product p 
+		INNER JOIN product_price pp
+		ON p.id = pp.product_id
+		GROUP BY p.id
+		having p.id = $1`, id)
+	prices := ""
+	err := row.Scan(&product.Id, &product.Name, &product.Stock, &product.Created_at, &prices)
+
+	hasErr := hasErr(c, err)
+	if hasErr {
+		return
+	}
+	product.Prices = getPriceList(prices)
+	c.JSON(http.StatusOK, product)
+}
+
+func getPriceList(prices string) []entity.Price {
 	priceList := strings.Split(prices, ",")
 	priceStructList := []entity.Price{}
 
 	for _, price := range priceList {
 		priceArr := strings.Split(price, " ")
 		if len(priceArr) != 2 {
-			return nil, errors.New("price or currency is missing")
+			continue
 		}
 		amount := priceArr[0]
 		currency := priceArr[1]
 		priceStruct := entity.Price{Amount: amount, Currency: currency}
 		priceStructList = append(priceStructList, priceStruct)
 	}
-	return priceStructList, nil
+	return priceStructList
 }
 
 func getPagination(c *gin.Context) (pageNum int, valid bool) {
@@ -82,37 +91,36 @@ func getPagination(c *gin.Context) (pageNum int, valid bool) {
 		pageNum, err = strconv.Atoi(page)
 		if err != nil {
 			log.Println("Missing page id")
-			response(c, http.StatusNotFound, err.Error())
+			errorResponse(c, http.StatusNotFound, err.Error())
 			return pageNum, false
 		}
 	}
 	if pageNum < 1 {
 		eMsg := "Page number cannot be less than 1"
 		log.Println(eMsg)
-		response(c, http.StatusNotFound, eMsg)
+		errorResponse(c, http.StatusNotFound, eMsg)
 		return pageNum, false
 	}
 	return pageNum, true
 }
 
-func (h handler) GetProduct(c *gin.Context) {
-	id := c.Param("id")
-	product := entity.Product{}
-	row := h.DB.QueryRow("SELECT id, name, stock, created_at FROM product WHERE id = $1", id)
-	err := row.Scan(&product.Id, &product.Name, &product.Stock, &product.Created_at)
-	switch err {
-	case sql.ErrNoRows:
-		log.Printf("No records are present for product with id: %s", id)
-		response(c, http.StatusBadRequest, err.Error())
-	case nil:
-		log.Printf("The system is able to fetch product with id: %s", id)
-		c.JSON(http.StatusOK, product)
-	default:
-		log.Printf("error: %v occurred while reading the database for product record with id: %s", err, id)
-		response(c, http.StatusInternalServerError, err.Error())
+func hasErr(c *gin.Context, err error) bool {
+	if err != nil {
+		var eMsg string
+		if err == sql.ErrNoRows {
+			eMsg = "No row record found in the product table"
+			log.Println(eMsg)
+		}
+		if eMsg == "" {
+			eMsg = err.Error()
+		}
+		errorResponse(c, http.StatusNotFound, eMsg)
+		return true
 	}
+
+	return false
 }
 
-func response(c *gin.Context, statusCode int, msg string) {
+func errorResponse(c *gin.Context, statusCode int, msg string) {
 	c.JSON(statusCode, gin.H{"message": msg, "statusCode": statusCode})
 }
