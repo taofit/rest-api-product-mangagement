@@ -32,6 +32,6 @@ func SetDbCon() (*sql.DB, error) {
 		return &sql.DB{}, err
 	}
 	log.Println("Database connection established")
-	
+
 	return conn, nil
 }
