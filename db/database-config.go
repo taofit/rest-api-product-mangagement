@@ -17,11 +17,11 @@ func SetDbCon() (*sql.DB, error) {
 	}
 	dbUser := os.Getenv("POSTGRES_USER")
 	dbPass := os.Getenv("POSTGRES_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
+	// dbHost := os.Getenv("DB_HOST") // it is not localhost, but the database service name in the docker-compose.yml file
 	dbName := os.Getenv("POSTGRES_DB")
 	dbPort := os.Getenv("DB_PORT")
 
-	dbSqlN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPass, dbName)
+	dbSqlN := fmt.Sprintf("host=database port=%s user=%s password=%s dbname=%s sslmode=disable", dbPort, dbUser, dbPass, dbName)
 	conn, err := sql.Open("postgres", dbSqlN)
 	if err != nil {
 		return &sql.DB{}, err
